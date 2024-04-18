@@ -920,7 +920,17 @@ L.Control.JSDialogBuilder = L.Control.extend({
 		if (data.command) {
 			var iconParent = expander.children('.ui-expander').get(0);
 			var icon = L.DomUtil.create('div', 'ui-expander-icon-right ' + builder.options.cssClass, iconParent);
-			builder._controlHandlers['toolitem'](icon, {type: 'toolitem', command: data.command, icon: builder._createIconURL('morebutton')}, builder);
+			builder._controlHandlers['toolitem'](
+				icon,
+				{
+					type: 'toolitem',
+					command: data.command,
+					aria : {
+						label: (data.children[0].text) ? 'More options for ' + data.children[0].text : '',
+					},
+					icon: builder._createIconURL('morebutton')
+				},
+				builder);
 		}
 
 		return false;
@@ -2342,8 +2352,13 @@ L.Control.JSDialogBuilder = L.Control.extend({
 				var label = L.DomUtil.create('label', 'ui-content unolabel', button);
 				label.htmlFor = buttonId;
 				label.textContent = builder._cleanText(data.text);
-				button.setAttribute('alt', label.textContent);
-				buttonImage.alt = label.textContent;
+
+				if(data.aria) {
+					buttonImage.alt = data.aria.label;
+				} else {
+					buttonImage.alt = label.textContent;
+				}
+
 				builder._stressAccessKey(label, button.accessKey);
 				controls['label'] = label;
 				$(div).addClass('has-label');
