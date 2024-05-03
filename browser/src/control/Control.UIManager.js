@@ -318,6 +318,7 @@ L.Control.UIManager = L.Control.extend({
 			// remove unused elements
 			L.DomUtil.remove(L.DomUtil.get('spreadsheet-toolbar'));
 			$('#presentation-controls-wrapper').show();
+			this.initializeRuler();
 		}
 
 		if (docType === 'text') {
@@ -326,13 +327,7 @@ L.Control.UIManager = L.Control.extend({
 			L.DomUtil.remove(L.DomUtil.get('presentation-controls-wrapper'));
 			document.getElementById('selectbackground').parentNode.removeChild(document.getElementById('selectbackground'));
 
-			if ((window.mode.isTablet() || window.mode.isDesktop()) && !app.isReadOnly()) {
-				var showRuler = this.getSavedStateOrDefault('ShowRuler');
-				var interactiveRuler = this.map.isEditMode();
-				var isRTL = document.documentElement.dir === 'rtl';
-				L.control.ruler({position: (isRTL ? 'topright' : 'topleft'), interactive:interactiveRuler, showruler: showRuler}).addTo(this.map);
-				this.map.fire('rulerchanged');
-			}
+			this.initializeRuler();
 
 			var showResolved = this.getSavedStateOrDefault('ShowResolved');
 			if (showResolved === false || showResolved === 'false')
@@ -400,6 +395,17 @@ L.Control.UIManager = L.Control.extend({
 			// So for the moment, let's just hide it on
 			// Chromebooks early
 			app.socket.sendMessage('uno .uno:SidebarHide');
+		}
+	},
+
+	// Initialize ruler
+	initializeRuler: function() {
+		if ((window.mode.isTablet() || window.mode.isDesktop()) && !app.isReadOnly()) {
+			var showRuler = this.getSavedStateOrDefault('ShowRuler');
+			var interactiveRuler = this.map.isEditMode();
+			var isRTL = document.documentElement.dir === 'rtl';
+			L.control.ruler({position: (isRTL ? 'topright' : 'topleft'), interactive:interactiveRuler, showruler: showRuler}).addTo(this.map);
+			this.map.fire('rulerchanged');
 		}
 	},
 
