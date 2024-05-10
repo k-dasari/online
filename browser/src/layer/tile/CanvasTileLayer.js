@@ -1451,7 +1451,10 @@ L.CanvasTileLayer = L.Layer.extend({
 		else if (textMsg.startsWith('unocommandresult:')) {
 			this._onUnoCommandResultMsg(textMsg);
 		}
-		else if (textMsg.startsWith('rulerupdate:')) {
+		else if (textMsg.startsWith('hrulerupdate:')) {
+			this._onRulerUpdate(textMsg);
+		}
+		else if (textMsg.startsWith('vrulerupdate:')) {
 			this._onRulerUpdate(textMsg);
 		}
 		else if (textMsg.startsWith('contextmenu:')) {
@@ -2851,9 +2854,17 @@ L.CanvasTileLayer = L.Layer.extend({
 	},
 
 	_onRulerUpdate: function (textMsg) {
+		var horizontalRuler = true;
+		if(textMsg.startsWith('vrulerupdate:')) {
+			horizontalRuler = false;
+		}
 		textMsg = textMsg.substring(13);
 		var obj = JSON.parse(textMsg);
-
+		obj.isHorizontalRuler = horizontalRuler;
+		// We will return just for temporarily untill next commit for vertical ruler design implementation
+		if (!horizontalRuler) {
+			return;
+		}
 		this._map.fire('rulerupdate', obj);
 	},
 
