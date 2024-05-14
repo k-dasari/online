@@ -2863,9 +2863,11 @@ L.CanvasTileLayer = L.Layer.extend({
 		obj.isHorizontalRuler = horizontalRuler;
 		// We will return just for temporarily untill next commit for vertical ruler design implementation
 		if (!horizontalRuler) {
-			return;
+			this._map.fire('vrulerupdate', obj);
 		}
-		this._map.fire('rulerupdate', obj);
+		else {
+			this._map.fire('rulerupdate', obj);
+		}
 	},
 
 	_onContextMenuMsg: function (textMsg) {
