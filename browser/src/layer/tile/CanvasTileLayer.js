@@ -1670,10 +1670,10 @@ L.CanvasTileLayer = L.Layer.extend({
 				if (wireIdToken !== undefined)
 					msg += ' ' + wireIdToken;
 				this._onInvalidateTilesMsg(msg);
-				return true; // filter
 			}
-			return false; // continue processing
+			return true; // filter
 		}
+		return false; // continue processing
 	},
 
 	_onTabStopListUpdate: function (textMsg) {
