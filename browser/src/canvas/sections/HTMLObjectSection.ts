@@ -16,7 +16,7 @@ class HTMLObjectSection extends app.definitions.canvasSectionObject {
 	zIndex: number = L.CSections.HTMLObject.zIndex;
 	documentObject: boolean = true;
 
-	constructor (sectionName: string, objectWidth: number, objectHeight: number, documentPosition: cool.SimplePoint,  extraClass: string = "", showSection: boolean = true) {
+	constructor (sectionName: string, objectWidth: number, objectHeight: number, documentPosition: cool.SimplePoint, extraClass: string = "", showSection: boolean = true) {
         super();
 
 		this.name = sectionName;

@@ -717,8 +717,6 @@ L.CanvasTileLayer = L.Layer.extend({
 		this._lastValidPart = -1;
 		// Cursor marker
 		this._cursorMarker = null;
-		// Graphic marker
-		this._graphicMarker = null;
 		// Graphic Selected?
 		this._hasActiveSelection = false;
 
@@ -1291,7 +1289,7 @@ L.CanvasTileLayer = L.Layer.extend({
 			this._onGraphicSelectionMsg(textMsg);
 		}
 		else if (textMsg.startsWith('graphicinnertextarea:')) {
-			this._onGraphicInnerTextAreaMsg(textMsg);
+			return; // Not used.
 		}
 		else if (textMsg.startsWith('cellcursor:')) {
 			this._onCellCursorMsg(textMsg);
@@ -1896,23 +1894,23 @@ L.CanvasTileLayer = L.Layer.extend({
 
 	_onShapeSelectionContent: function (textMsg) {
 		textMsg = textMsg.substring('shapeselectioncontent:'.length + 1);
-		if (this._graphicMarker) {
-			var extraInfo = this._graphicSelection.extraInfo;
-			if (extraInfo.id) {
-				this._map._cacheSVG[extraInfo.id] = textMsg;
-			}
-			var wasVisibleSVG = this._graphicMarker._hasVisibleEmbeddedSVG();
-			this._graphicMarker.removeEmbeddedSVG();
 
-			// video is handled in _onEmbeddedVideoContent
-			var isVideoSVG = textMsg.indexOf('<video') !== -1;
-			if (isVideoSVG) {
-				this._map._cacheSVG[extraInfo.id] = undefined;
-			} else {
-				this._graphicMarker.addEmbeddedSVG(textMsg);
-				if (wasVisibleSVG)
-					this._graphicMarker._showEmbeddedSVG();
-			}
+		var extraInfo = this._graphicSelection.extraInfo;
+		if (extraInfo.id) {
+			this._map._cacheSVG[extraInfo.id] = textMsg;
+		}
+
+		var wasVisibleSVG = this._graphicMarker.hasVisibleEmbeddedSVG();
+		this._graphicMarker.removeEmbeddedSVG();
+
+		// video is handled in _onEmbeddedVideoContent
+		var isVideoSVG = textMsg.indexOf('<video') !== -1;
+		if (isVideoSVG) {
+			this._map._cacheSVG[extraInfo.id] = undefined;
+		} else {
+			this._graphicMarker.addEmbeddedSVG(textMsg);
+			if (wasVisibleSVG)
+				this._graphicMarker.showEmbeddedSVG();
 		}
 	},
 
@@ -2007,11 +2005,6 @@ L.CanvasTileLayer = L.Layer.extend({
 		var bounds = new L.Bounds(topLeft, bottomRight);
 
 		this._oleCSelections.setPointSet(CPointSet.fromBounds(bounds));
-	},
-
-	_onGraphicInnerTextAreaMsg: function (textMsg) {
-		var msgData = JSON.parse(textMsg.substr('graphicinnertextarea: "innerTextRect":'.length));
-		this._onUpdateGraphicInnerTextArea(msgData);
 	},
 
 	_onGraphicSelectionMsg: function (textMsg) {
@@ -3983,19 +3976,6 @@ L.CanvasTileLayer = L.Layer.extend({
 		);
 	},
 
-	_onUpdateGraphicInnerTextArea: function (rect) {
-		var topLeftTwips = new L.Point(rect[0], rect[1]);
-		var offset = new L.Point(rect[2], rect[3]);
-		var bottomRightTwips = topLeftTwips.add(offset);
-
-		this._innerTextRectTwips = this._getGraphicSelectionRectangle(
-			new L.Bounds(topLeftTwips, bottomRightTwips));
-
-		this._innerTextRect = new L.LatLngBounds(
-			this._twipsToLatLng(this._innerTextRectTwips.getTopLeft(), this._map.getZoom()),
-			this._twipsToLatLng(this._innerTextRectTwips.getBottomRight(), this._map.getZoom()));
-	},
-
 	// Update group layer selection handler.
 	_onUpdateGraphicSelection: function () {
 		if (this._graphicSelection) {
@@ -4004,22 +3984,22 @@ L.CanvasTileLayer = L.Layer.extend({
 			if (!this._isAnyInputFocused())
 				this._map.focus(this.isCursorVisible());
 
-			if (this._graphicMarker) {
-				this._graphicMarker.removeEventParent(this._map);
-				this._graphicMarker.off('scalestart scaleend', this._onGraphicEdit, this);
-				this._graphicMarker.off('rotatestart rotateend', this._onGraphicRotate, this);
-				if (this._graphicMarker.dragging)
-					this._graphicMarker.dragging.disable();
-				this._graphicMarker.transform.disable();
-				this._map.removeLayer(this._graphicMarker);
-			}
-
 			if (!this._map.isEditMode()) {
 				return;
 			}
 
 			var extraInfo = this._graphicSelection.extraInfo;
-			this._graphicMarker = L.svgGroup(this._graphicSelection, {
+			this._graphicMarker.setPosition(this._graphicSelection.pX1, this._graphicSelection.pY1);
+			this._graphicMarker.refreshInfo(this._graphicSelection.extraInfo);
+			this._graphicMarker.setShowSection(true);
+			app.sectionContainer.requestReDraw();
+
+			this._hasActiveSelection = true;
+
+			if (true)
+				return;
+
+			L.svgGroup(this._graphicSelection, {
 				draggable: extraInfo.isDraggable,
 				dragConstraint: extraInfo.dragInfo,
 				svg: this._map._cacheSVG[extraInfo.id],
@@ -4032,10 +4012,6 @@ L.CanvasTileLayer = L.Layer.extend({
 			if (!this._graphicMarker) {
 				this._map.fire('error', {msg: 'Graphic marker initialization', cmd: 'marker', kind: 'failed', id: 1});
 				return;
-			}
-
-			if (extraInfo.innerTextRect) {
-				this._onUpdateGraphicInnerTextArea(extraInfo.innerTextRect);
 			}
 
 			this._graphicMarker.on('graphicmovestart graphicmoveend', this._onGraphicMove, this);
@@ -4057,18 +4033,11 @@ L.CanvasTileLayer = L.Layer.extend({
 				this._graphicMarker.removeEmbeddedSVG();
 				this._graphicMarker.addEmbeddedSVG(extraInfo.dragInfo.svg);
 			}
-			this._hasActiveSelection = true;
+
 		}
-		else if (this._graphicMarker) {
-			this._graphicMarker.off('graphicmovestart graphicmoveend', this._onGraphicMove, this);
-			this._graphicMarker.off('scalestart scaleend', this._onGraphicEdit, this);
-			this._graphicMarker.off('rotatestart rotateend', this._onGraphicRotate, this);
-			if (this._graphicMarker.dragging)
-				this._graphicMarker.dragging.disable();
-			this._graphicMarker.transform.disable();
-			this._map.removeLayer(this._graphicMarker);
-			this._graphicMarker.isDragged = false;
-			this._graphicMarker.setVisible(false);
+		else {
+			this._graphicMarker.setShowSection(false);
+			app.sectionContainer.requestReDraw();
 		}
 		this._updateCursorAndOverlay();
 	},
@@ -4871,6 +4840,9 @@ L.CanvasTileLayer = L.Layer.extend({
 		app.sectionContainer.addSection(this._map._docLayer._cellSelectionHandleStart);
 		app.sectionContainer.addSection(this._map._docLayer._cellSelectionHandleEnd);
 
+		this._graphicMarker = new app.definitions.shapeHandlesSection({}); // Initialize.
+		app.sectionContainer.addSection(this._graphicMarker);
+
 		if (this.isCalc()) {
 			var cursorStyle = new CStyleData(this._cursorDataDiv);
 			var weight = cursorStyle.getFloatPropWithoutUnit('border-top-width') * app.dpiScale;
@@ -4987,9 +4959,6 @@ L.CanvasTileLayer = L.Layer.extend({
 
 		if (this._cursorMarker && this._cursorMarker.isDomAttached()) {
 			this._cursorMarker.remove();
-		}
-		if (this._graphicMarker) {
-			this._graphicMarker.remove();
 		}
 
 		app.sectionContainer.removeSection(this._selectionHandles.start);

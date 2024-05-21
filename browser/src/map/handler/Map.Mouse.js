@@ -48,7 +48,7 @@ L.Map.Mouse = L.Handler.extend({
 		if (!docLayer || (this._map.slideShow && this._map.slideShow.fullscreen) || this._map.rulerActive) {
 			return;
 		}
-		if (docLayer._graphicMarker) {
+		if (docLayer._graphicMarker && false) {
 			if (docLayer._graphicMarker.isDragged) {
 				return;
 			}

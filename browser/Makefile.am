@@ -229,6 +229,10 @@ COOL_JS_LST =\
 	src/canvas/sections/TilesSection.ts \
 	src/canvas/sections/AutoFillMarkerSection.ts \
 	src/canvas/sections/HTMLObjectSection.ts \
+	src/canvas/sections/ShapeHandlesSection.ts \
+	src/canvas/sections/ShapeHandleAnchorSubSection.ts \
+	src/canvas/sections/ShapeHandleRotationSubSection.ts \
+	src/canvas/sections/ShapeHandleScalingSubSection.ts \
 	src/canvas/sections/CellCursorSection.ts \
 	src/canvas/sections/CellSelectionHandleSection.ts \
 	src/canvas/sections/CalcValidityDropDownSection.ts \
